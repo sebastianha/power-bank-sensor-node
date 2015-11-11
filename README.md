@@ -6,13 +6,13 @@ Tutorial how to build a USB-chargeable temperature / humidity / pressure sensor 
 
 Here is a list of things to buy:
 
-1. Arduino Pro Mini 8MHz, 3.3V
-2. 433 MHz sender module
-3. BMP180 pressure sensor
-4. DHT22 humidity sensor
-5. USB cell phone charger
-6. 16340 rechargeable battery
-7. Optional: USB plugs & DS18B20 tempereature sensors
+1. Arduino Pro Mini 8MHz, 3.3V [Ebay](http://www.ebay.de/itm/400985414333)
+2. 433 MHz sender module [Ebay](http://www.ebay.de/itm/400985370866)
+3. BMP180 pressure sensor [Ebay](http://www.ebay.de/itm/201414876396)
+4. DHT22 humidity sensor [Ebay](http://www.ebay.de/itm/400985446261)
+5. USB cell phone charger [Ebay](http://www.ebay.de/itm/311142194692)
+6. 16340 rechargeable battery [Dealextreme](http://www.dx.com/p/24980)
+7. Optional: USB plugs & DS18B20 tempereature sensors [Ebay](http://www.ebay.de/itm/400985334891)
 
 ## Howto
 
