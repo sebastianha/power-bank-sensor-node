@@ -1,6 +1,10 @@
 # power-bank-sensor-node
 Tutorial how to build a USB-chargeable temperature / humidity / pressure sensor node in a power bank case which transmits the data via 433MHz to a receiver whose serial protocol is MySensor compatible.
 
+## Example
+
+<img src="https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/images/sensor_k.jpg" width="600">
+[Click here for a high-res picture](https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/images/sensor.jpg)
 
 ## Prequesites
 
