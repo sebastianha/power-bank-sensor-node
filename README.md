@@ -5,7 +5,7 @@ Tutorial how to build a USB-chargeable temperature / humidity / pressure sensor 
 
 Here is an image of an earlier version of the sensor node:
 
-<img src="https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/images/sensor_k.jpg" width="800">
+<img src="https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/images/sensor_k.jpg" width="728">
 
 [Click here for a high-res picture](https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/images/sensor.jpg)
 
