@@ -21,6 +21,10 @@ Here is a list of things to buy:
 6. 16340 rechargeable battery [Dealextreme](http://www.dx.com/p/24980)
 7. Optional: USB plugs & DS18B20 tempereature sensors [Ebay](http://www.ebay.de/itm/400985334891)
 
+## Schematic
+
+<img src="https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/schematic.jpg" width="728">
+
 ## Howto
 
 #### Step 1: Remove unecessary and power hungry parts of the Arduino
