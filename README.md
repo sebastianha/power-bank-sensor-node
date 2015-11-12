@@ -25,6 +25,8 @@ Here is a list of things to buy:
 
 <img src="https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/src/sensor-node/schematic.png" width="728">
 
+Note: The programming pins of my Arduino seem to have a different order.
+
 ## Howto
 
 #### Step 1: Remove unecessary and power hungry parts of the Arduino
