@@ -23,7 +23,7 @@ Here is a list of things to buy:
 
 ## Schematic
 
-<img src="https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/schematic.jpg" width="728">
+<img src="https://raw.githubusercontent.com/sebastianha/power-bank-sensor-node/master/schematic.png" width="728">
 
 ## Howto
 
