@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <EEPROM.h>
 #include <VirtualWire.h>
-#include <LowPower.h>  // 2,45 mA
 
 /*********************************
 ***** HARDWARE CONFIGURATION *****
@@ -47,6 +46,10 @@
 ***** DO NOT EDIT BELOW *****
 *****************************/
 
+// Select sleep method
+//#define SLEEP_LOWPOWERLIB // 0.035 mAh
+#define SLEEP_NICK // 0.016 mAh
+
 const boolean DEBUG = false;   // Enable debug mode?
 
 #define INT_MIN -32768         // Value for "no sensor value available"
@@ -63,6 +66,71 @@ const int V_PRESSURE = 4;
 uint8_t MESSAGE_SEQUENCE_NUMBER = 0;
 uint16_t DEVICE_UID = 0;       // is read from EEPROM in setup or generated if not present
                                // Value range is from 10000 to 60000
+
+#ifdef SLEEP_LOWPOWERLIB // https://github.com/rocketscream/Low-Power
+  #include <LowPower.h>
+#endif
+
+#ifdef SLEEP_NICK // http://www.gammon.com.au/forum/?id=11497
+  #include <avr/sleep.h>
+  #include <avr/wdt.h>
+
+  ISR (WDT_vect) {
+    wdt_disable();
+  }
+
+  void sleep1s() {
+    // disable ADC
+    ADCSRA = 0;
+
+    // clear various "reset" flags
+    MCUSR = 0;
+    // allow changes, disable reset
+    WDTCSR = bit (WDCE) | bit (WDE);
+    // set interrupt mode and an interval
+    WDTCSR = bit (WDIE) | bit (WDP2) | bit (WDP1);    // set WDIE, and 1 second delay
+    wdt_reset();  // pat the dog
+
+    set_sleep_mode (SLEEP_MODE_PWR_DOWN);
+    noInterrupts ();           // timed sequence follows
+    sleep_enable();
+
+    // turn off brown-out enable in software
+    MCUCR = bit (BODS) | bit (BODSE);
+    MCUCR = bit (BODS);
+    interrupts ();             // guarantees next instruction executed
+    sleep_cpu ();
+
+    // cancel sleep as a precaution
+    sleep_disable();
+  }
+  
+  void sleep8s() {
+    // disable ADC
+    ADCSRA = 0;
+
+    // clear various "reset" flags
+    MCUSR = 0;
+    // allow changes, disable reset
+    WDTCSR = bit (WDCE) | bit (WDE);
+    // set interrupt mode and an interval
+    WDTCSR = bit (WDIE) | bit (WDP3) | bit (WDP0);    // set WDIE, and 8 seconds delay
+    wdt_reset();  // pat the dog
+
+    set_sleep_mode (SLEEP_MODE_PWR_DOWN);
+    noInterrupts ();           // timed sequence follows
+    sleep_enable();
+
+    // turn off brown-out enable in software
+    MCUCR = bit (BODS) | bit (BODSE);
+    MCUCR = bit (BODS);
+    interrupts ();             // guarantees next instruction executed
+    sleep_cpu ();
+
+    // cancel sleep as a precaution
+    sleep_disable();
+  }
+#endif
 
 #if defined(DHT22_TEMP) || defined(DHT22_HUM)
   #include <dht.h>
@@ -272,8 +340,15 @@ void measure(void) {
         ds.reset();
         ds.select(addr);
         ds.write(0x44, 1);
-        // Does this work correctly?
-        LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
+        #ifdef SLEEP_LOWPOWERLIB
+          LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
+        #endif
+        #ifdef SLEEP_NICK
+          sleep1s();
+        #endif
+        #if !defined(SLEEP_LOWPOWERLIB) && !defined(SLEEP_NICK)
+          delay(1000);
+        #endif
         ds.reset();
         ds.select(addr);
         ds.write(0xBE);
@@ -390,10 +465,20 @@ void loop(void) {
   }
   
   // Every ~5 minutes (37*8s)
-  if(DEBUG)
+  if(DEBUG) {
     delay(3000);
-  else
-    for(int i=0; i<SLEEP_TIME_8S; i++)
-      LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  } else {
+    for(int i=0; i<SLEEP_TIME_8S; i++) {
+      #ifdef SLEEP_LOWPOWERLIB
+        LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+      #endif
+      #ifdef SLEEP_NICK
+        sleep8s();
+      #endif
+      #if !defined(SLEEP_LOWPOWERLIB) && !defined(SLEEP_NICK)
+        delay(8000);
+      #endif
+    }
+  }
 }
 
