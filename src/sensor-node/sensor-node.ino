@@ -138,7 +138,6 @@ uint16_t DEVICE_UID = 0;       // is read from EEPROM in setup or generated if n
 #endif
 
 #if defined(BARO_TEMP) || defined(BARO_PRESS)
-  #include <Wire.h>
   #include <SFE_BMP180.h>
   SFE_BMP180 pressure;
 #endif

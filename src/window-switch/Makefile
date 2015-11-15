@@ -1,2 +1,2 @@
-ARDUINO_LIBS = EEPROM VirtualWire Wire
+ARDUINO_LIBS = EEPROM VirtualWire
 include /opt/Arduino-Makefile/Arduino.mk
