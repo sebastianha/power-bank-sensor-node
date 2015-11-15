@@ -1,2 +1,2 @@
-ARDUINO_LIBS = EEPROM VirtualWire SFE_BMP180 Wire
+ARDUINO_LIBS = EEPROM VirtualWire Wire
 include /opt/Arduino-Makefile/Arduino.mk
