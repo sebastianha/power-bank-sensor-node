@@ -453,8 +453,8 @@ void setup(void) {
   if(DEBUG) Serial.println("\n");
 }
 
+unsigned long t;
 void loop(void) {
-  int t;
   if(DEBUG) t = millis();
   measure();
   if(DEBUG) {
