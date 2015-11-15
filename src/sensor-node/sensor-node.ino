@@ -440,10 +440,11 @@ void setup(void) {
     pinMode(BARO_POWER_PIN, OUTPUT);
     digitalWrite(BARO_POWER_PIN, HIGH);
     delay(500);
-    if (pressure.begin())
+    if (pressure.begin()) {
       if(DEBUG) Serial.println("BMP180 init success");
-    else
+	} else {
       if(DEBUG) Serial.println("BMP180 init fail");
+    }
   #endif
 
   #ifdef DS18B20
