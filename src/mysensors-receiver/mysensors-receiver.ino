@@ -12,6 +12,7 @@ const int baudrate = 2000;   // Needs to be adjusted on sender side, too
 // According to mysensors definition
 const int V_TEMP     = 0;
 const int V_HUM      = 1;
+const int V_STATUS   = 2;
 const int V_PRESSURE = 4;
 
 const boolean DEBUG = false; // Enable debug mode?
@@ -142,6 +143,19 @@ void loop()
               }
               print_mysensor_string(1, V_HUM, hum);
             } else if(DEBUG) Serial.println("-> humidity value not set!");
+            reader+=2;
+          } else if(SENSOR_TYPE == V_STATUS) {
+            if(DEBUG) Serial.println("Found status value");
+            memcpy(b2i.b, buf+reader, 2);
+            if(b2i.i > INT_MIN) {
+              boolean status = false;
+              if(b2i.i != 0) status = true;
+              if(DEBUG) {
+                Serial.print("Status:           ");
+                Serial.println(status);
+              }
+              print_mysensor_string(1, V_STATUS, status);
+            } else if(DEBUG) Serial.println("-> status value not set!");
             reader+=2;
           } else if(SENSOR_TYPE == V_PRESSURE) {
             if(DEBUG) Serial.println("Found pressure value");
