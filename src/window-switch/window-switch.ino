@@ -70,8 +70,10 @@ int readVcc() {
   return int(result); // Vcc in millivolts
 }
 
+byte ADCSRA_BACKUP;
 void wake () {
   sleep_disable();
+  ADCSRA = ADCSRA_BACKUP;
   detachInterrupt (0);
 }
 
@@ -115,7 +117,8 @@ void setup () {
 }
 
 void up() {
-  ADCSRA = 0;  
+  ADCSRA_BACKUP = ADCSRA;
+  ADCSRA = 0;
   set_sleep_mode (SLEEP_MODE_PWR_DOWN);  
   sleep_enable();
   noInterrupts ();
@@ -128,6 +131,7 @@ void up() {
 }
 
 void down() {
+  ADCSRA_BACKUP = ADCSRA;
   ADCSRA = 0;  
   set_sleep_mode (SLEEP_MODE_PWR_DOWN);  
   sleep_enable();

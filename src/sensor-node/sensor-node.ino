@@ -81,6 +81,7 @@ uint16_t DEVICE_UID = 0;       // is read from EEPROM in setup or generated if n
 
   void sleep1s() {
     // disable ADC
+    byte ADCSRA_BACKUP = ADCSRA;
     ADCSRA = 0;
 
     // clear various "reset" flags
@@ -103,10 +104,12 @@ uint16_t DEVICE_UID = 0;       // is read from EEPROM in setup or generated if n
 
     // cancel sleep as a precaution
     sleep_disable();
+    ADCSRA = ADCSRA_BACKUP;
   }
   
   void sleep8s() {
     // disable ADC
+    byte ADCSRA_BACKUP = ADCSRA;
     ADCSRA = 0;
 
     // clear various "reset" flags
@@ -129,6 +132,7 @@ uint16_t DEVICE_UID = 0;       // is read from EEPROM in setup or generated if n
 
     // cancel sleep as a precaution
     sleep_disable();
+    ADCSRA = ADCSRA_BACKUP;
   }
 #endif
 
