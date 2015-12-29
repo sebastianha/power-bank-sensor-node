@@ -13,9 +13,9 @@
 #define BATTERY_FULL            4200   // in mV, use max measured voltage
 #define BATTERY_EMPTY           2800   // in mV, use cut-off voltage
 
-#define RADIO_RX_PIN            2      // Not connected
+#define RADIO_RX_PIN            A2     // Not connected
 #define RADIO_TX_PIN            A3     // Data pin for sender
-#define RADIO_PTT_PIN           3      // Not connected
+#define RADIO_PTT_PIN           2      // Not connected
 #define RADIO_REPEAT_MSG        3      // Normally 3 times is enough to ensure data transmission
 #define RADIO_BAUD_RATE         2000   // Needs to be adjusted on receiver side, too
 
