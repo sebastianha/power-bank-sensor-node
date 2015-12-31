@@ -28,13 +28,18 @@
 #define DHT22_POWER_PIN         13     // Powers the sensor
 #define DHT22_PIN               A0     // Data pin for sensor
 
+#define BARO_LIGHT_POWER_PIN    5      // Powers the barometer and or light sensor
+
 #define BARO_TEMP                      // Enable if BMP180 is connected and temperature should be read
 #define BARO_TEMP_MULTIPLIER    1      // Multiplier
 #define BARO_TEMP_OFFSET        0      // Offset in °C
 #define BARO_PRESS                     // Enable if BMP180 is connected and pressure should be read
 #define BARO_PRESS_MULTIPLIER   1      // Multiplier
 #define BARO_PRESS_OFFSET       0      // Offset in mbar
-#define BARO_POWER_PIN          5      // Powers the sensor
+
+#define LIGHT                          // Enable if BH1750 is connected and light should be read
+#define LIGHT_MULTIPLIER        1      // Multiplier
+#define LIGHT_OFFSET            0      // Offset in lux
 
 #define DS18B20                        // Enable if DS18B20 is connected
 #define DS18B20_MULTIPLIER      1      // Multiplier
@@ -62,6 +67,7 @@ const uint8_t PROTOCOL_VERSION = 1;
 const int V_TEMP     = 0;
 const int V_HUM      = 1;
 const int V_PRESSURE = 4;
+const int V_LEVEL    = 37;
 
 uint8_t MESSAGE_SEQUENCE_NUMBER = 0;
 uint16_t DEVICE_UID = 0;       // is read from EEPROM in setup or generated if not present
@@ -146,6 +152,12 @@ uint16_t DEVICE_UID = 0;       // is read from EEPROM in setup or generated if n
   SFE_BMP180 pressure;
 #endif
 
+#ifdef LIGHT
+  #include <Wire.h>
+  #include <BH1750.h>
+  BH1750 lightMeter;
+#endif
+
 #ifdef DS18B20
   #include <OneWire.h>
   OneWire ds(DS18B20_PIN);
@@ -155,6 +167,11 @@ union {
   int i = 0;
   unsigned char b[2];
 } uid, bat, temp, hum, baro_t, ds_t1;
+
+union {
+  unsigned int u = 0;
+  unsigned char b[2];
+} light;
 
 union {
   float f = 0;
@@ -195,8 +212,10 @@ void measure(void) {
   temp.i   = INT_MIN;
   hum.i    = INT_MIN;
   baro_t.i = INT_MIN;
+  light.u  = INT_MIN;
   ds_t1.i  = INT_MIN;
   baro_p.f = INT_MIN;
+
 
   MESSAGE_SEQUENCE_NUMBER+=1; // increase sequence number to avoid duplicate messages
   if(DEBUG) {
@@ -212,9 +231,10 @@ void measure(void) {
   //               ||| | |  DHT22 Humidity
   //               ||| | |  |  BMP180 Temperature
   //               ||| | |  |  |  BMP180 Pressure
-  //               ||| | |  |  |  |    DS18B20 Temperatures
-  //               ||| | |  |  |  |    |
-  byte msg[28] = "S    BBTTTHHHTTTPPPPPTTTTTT";
+  //               ||| | |  |  |  |    BH1750 Light
+  //               ||| | |  |  |  |    |  DS18B20 Temperatures
+  //               ||| | |  |  |  |    |  |
+  byte msg[28] = "S    BBTTTHHHTTTPPPPPLLLTTT";
   //              012345678901234567890123456
 
   // copy static values to message
@@ -330,6 +350,27 @@ void measure(void) {
   /*************************
   ***    READ BMP END    ***
   **************************/
+
+  /*************************
+  ***  READ LIGHT START  ***
+  **************************/
+  #ifdef LIGHT
+    lightMeter.begin(BH1750_ONE_TIME_HIGH_RES_MODE);
+    unsigned int lux = lightMeter.readLightLevel();
+	light.u = lux * LIGHT_MULTIPLIER + LIGHT_OFFSET;
+    if(DEBUG) {
+      Serial.print("   Light: ");
+      Serial.print(light.u);
+      Serial.print(" lx");
+    }
+
+    memcpy(msg+mp+0, &V_LEVEL, 1);
+    memcpy(msg+mp+1, light.b, 2);
+    mp += 3;
+  #endif
+  /*************************
+  ***   READ LIGHT END   ***
+  **************************/
   
   /*************************
   *** READ DS18B20 START ***
@@ -439,9 +480,12 @@ void setup(void) {
     pinMode(DHT22_PIN, OUTPUT);
   #endif
 
+  #if defined(BARO_TEMP) || defined(BARO_PRESS) || defined(LIGHT)
+    pinMode(BARO_LIGHT_POWER_PIN, OUTPUT);
+    digitalWrite(BARO_LIGHT_POWER_PIN, HIGH);
+  #endif
+
   #if defined(BARO_TEMP) || defined(BARO_PRESS)
-    pinMode(BARO_POWER_PIN, OUTPUT);
-    digitalWrite(BARO_POWER_PIN, HIGH);
     delay(500);
     if (pressure.begin()) {
       if(DEBUG) Serial.println("BMP180 init success");
