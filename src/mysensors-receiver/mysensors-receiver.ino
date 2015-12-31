@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <VirtualWire.h>
 
-const int rx_pin   = 11;
+const int rx_pin   = 4;
 const int tx_pin   = 5;      // Not connected
 const int ptt_pin  = 6;      // Not connected
 const int led_pin  = 13;
@@ -14,6 +14,7 @@ const int V_TEMP     = 0;
 const int V_HUM      = 1;
 const int V_STATUS   = 2;
 const int V_PRESSURE = 4;
+const int V_LEVEL    = 37;
 
 const boolean DEBUG = false; // Enable debug mode?
 
@@ -21,6 +22,11 @@ union {
   unsigned char b[2];
   int i = 0;
 } b2i;
+
+union {
+  unsigned char b[2];
+  unsigned int u = 0;
+} b2u;
 
 union {
   unsigned char b[4];
@@ -170,6 +176,19 @@ void loop()
               print_mysensor_string(1, V_PRESSURE, pressure);
             } else if(DEBUG) Serial.println("-> pressure value not set!");
             reader+=4;
+          } else if(SENSOR_TYPE == V_LEVEL) {
+            if(DEBUG) Serial.println("Found level value");
+            memcpy(b2u.b, buf+reader, 2);
+            if(b2u.u > INT_MIN) {
+              unsigned int level = b2u.u;
+              if(DEBUG) {
+                Serial.print("Level:            ");
+                Serial.print(level);
+                Serial.println(" lx");
+              }
+              print_mysensor_string(1, V_LEVEL, level);
+            } else if(DEBUG) Serial.println("-> level value not set!");
+            reader+=2;
           }
         }
       }
