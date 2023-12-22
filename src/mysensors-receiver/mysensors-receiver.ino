@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <VirtualWire.h>
 
-const int rx_pin   = 4;
+const int rx_pin   = 11;
 const int tx_pin   = 5;      // Not connected
 const int ptt_pin  = 6;      // Not connected
 const int led_pin  = 13;
@@ -14,7 +14,14 @@ const int V_TEMP     = 0;
 const int V_HUM      = 1;
 const int V_STATUS   = 2;
 const int V_PRESSURE = 4;
+const int V_TRIPPED  = 16;
 const int V_LEVEL    = 37;
+
+const int S_DOOR     = 0;
+const int S_TEMP     = 6;
+const int S_HUM      = 7;
+const int S_BARO     = 8;
+const int S_LIGHT_LEVEL = 16;
 
 const boolean DEBUG = false; // Enable debug mode?
 
@@ -37,10 +44,90 @@ uint16_t UID = -1;
 int sensor_id = 0;
 uint8_t MESSAGE_SEQUENCE_NUMBER = 0;
 
-void print_mysensor_string(int message_type, int sub_type, float payload) {
-  Serial.print(UID);
+const uint8_t max_known_uids = 32;
+uint16_t known_uids[max_known_uids];
+bool uid_is_known(uint16_t uid) {
+  for(int i=0; i<max_known_uids; i++) {
+    if(DEBUG) {
+      Serial.print(uid);
+      Serial.print(" ");
+      Serial.println(known_uids[i]);
+    }
+
+    if(known_uids[i] == uid) {
+      if(DEBUG) {
+        Serial.print("ID KNOWN: ");
+        Serial.println(uid);
+      }
+      return true;
+    }
+    if(known_uids[i] == 65535) {
+      if(DEBUG) {
+        Serial.print("ID UNKNOWN: ");
+        Serial.println(uid);
+      }
+      known_uids[i] = uid;
+      return false;
+    }
+  }
+  return false;
+}
+
+void print_mysensor_presentation() {
+  Serial.print(UID/256);
+  Serial.println(";255;0;0;0;2.0");
+
+  Serial.print(UID/256);
+  Serial.print(";255;3;0;11;");
+  Serial.println(UID);
+
+  Serial.print(UID/256);
+  Serial.println(";255;3;0;12;1.0");
+}
+
+void print_mysensor_string(int is_known, int message_type, int sub_type, float payload) {
+  int s_id = sensor_id;
+  if(sensor_id == 0) {
+    s_id = 255;
+  } else {
+    s_id = s_id -1;
+
+    if(!is_known) {
+      Serial.print(UID/256);
+      Serial.print(";");
+      Serial.print(s_id);
+      Serial.print(";0;0;");
+      switch(sub_type) {
+        case V_TEMP:
+          Serial.print(S_TEMP);
+          Serial.print(";Temperature ");
+          break;
+        case V_HUM:
+          Serial.print(S_HUM);
+          Serial.print(";Humidity ");
+          break;
+        case V_PRESSURE:
+          Serial.print(S_BARO);
+          Serial.print(";Pressure ");
+          break;
+        case V_TRIPPED:
+          Serial.print(S_DOOR);
+          Serial.print(";Contact ");
+          break;
+        case V_LEVEL:
+          Serial.print(S_LIGHT_LEVEL);
+          Serial.print(";Light ");
+          break;
+        default:
+          Serial.print(";Unknown");
+      }
+      Serial.println(UID);
+    }
+  }
+
+  Serial.print(UID/256);
   Serial.print(";");
-  Serial.print(sensor_id);
+  Serial.print(s_id);
   Serial.print(";");
   Serial.print(message_type);
   Serial.print(";");
@@ -48,13 +135,22 @@ void print_mysensor_string(int message_type, int sub_type, float payload) {
   Serial.print(";");
   Serial.print(sub_type);
   Serial.print(";");
-  Serial.println(payload);
+  if(message_type == 1 && (sub_type == V_TEMP || sub_type == V_HUM)) {
+    Serial.println(payload);
+  } else {
+    Serial.println((int)payload);
+  }
+
   sensor_id+=1;
 }
 
 void setup()
 {
-  Serial.begin(57600);
+  Serial.begin(115200);
+
+  for(int i=0; i<max_known_uids; i++) {
+    known_uids[i] = 65535;
+  }
 
   vw_set_tx_pin(tx_pin);
   vw_set_rx_pin(rx_pin);
@@ -101,6 +197,8 @@ void loop()
         memcpy(b2i.b, buf+3, 2);
         UID = uint16_t(b2i.i);
 
+        bool is_known = uid_is_known(UID);
+
         memcpy(b2i.b, buf+5, 2);
         float battery_percent = float(b2i.i)/100.0f;
 
@@ -117,7 +215,10 @@ void loop()
           Serial.println(" %");
         }
 
-        print_mysensor_string(3, 0, battery_percent);
+        if(!is_known) {
+          print_mysensor_presentation();
+        }
+        print_mysensor_string(is_known, 3, 0, battery_percent);
 
         int reader = 7;
 
@@ -134,7 +235,7 @@ void loop()
                 Serial.print(temp, 2);
                 Serial.println(" C");
               }
-              print_mysensor_string(1, V_TEMP, temp);
+              print_mysensor_string(is_known, 1, V_TEMP, temp);
             } else if(DEBUG) Serial.println("-> temperature value not set!");
             reader+=2;
           } else if(SENSOR_TYPE == V_HUM) {
@@ -147,20 +248,20 @@ void loop()
                 Serial.print(hum, 2);
                 Serial.println(" %");
               }
-              print_mysensor_string(1, V_HUM, hum);
+              print_mysensor_string(is_known, 1, V_HUM, hum);
             } else if(DEBUG) Serial.println("-> humidity value not set!");
             reader+=2;
           } else if(SENSOR_TYPE == V_STATUS) {
             if(DEBUG) Serial.println("Found status value");
             memcpy(b2i.b, buf+reader, 2);
             if(b2i.i > INT_MIN) {
-              boolean status = false;
-              if(b2i.i != 0) status = true;
+              boolean status = true;
+              if(b2i.i != 0) status = false;
               if(DEBUG) {
                 Serial.print("Status:           ");
                 Serial.println(status);
               }
-              print_mysensor_string(1, V_STATUS, status);
+              print_mysensor_string(is_known, 1, V_TRIPPED, status);
             } else if(DEBUG) Serial.println("-> status value not set!");
             reader+=2;
           } else if(SENSOR_TYPE == V_PRESSURE) {
@@ -173,7 +274,7 @@ void loop()
                 Serial.print(pressure, 2);
                 Serial.println(" mB");
               }
-              print_mysensor_string(1, V_PRESSURE, pressure);
+              print_mysensor_string(is_known, 1, V_PRESSURE, pressure);
             } else if(DEBUG) Serial.println("-> pressure value not set!");
             reader+=4;
           } else if(SENSOR_TYPE == V_LEVEL) {
@@ -186,7 +287,7 @@ void loop()
                 Serial.print(level);
                 Serial.println(" lx");
               }
-              print_mysensor_string(1, V_LEVEL, level);
+              print_mysensor_string(is_known, 1, V_LEVEL, level);
             } else if(DEBUG) Serial.println("-> level value not set!");
             reader+=2;
           }
